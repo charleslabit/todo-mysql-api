@@ -9,11 +9,9 @@ router.post("/", async (req, res) => {
     if (!title) return res.status(400).json({ error: "Title is required" });
 
     const query = "INSERT INTO todos (title) VALUES (?)";
-    const [results] = await connection
-      .promise()
-      .query(query, [title, status || false]);
+    const [results] = await connection.promise().query(query, [title]);
 
-    res.status(201).json({ id: results.insertId, title, status });
+    res.status(201).json({ id: results.insertId, title });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
