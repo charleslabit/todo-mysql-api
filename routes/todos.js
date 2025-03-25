@@ -5,15 +5,15 @@ const router = express.Router();
 // ✅ Create a new todo
 router.post("/", async (req, res) => {
   try {
-    const { title, completed } = req.body;
+    const { title, status } = req.body;
     if (!title) return res.status(400).json({ error: "Title is required" });
 
-    const query = "INSERT INTO todos (title, completed) VALUES (?, ?)";
+    const query = "INSERT INTO todos (title, status) VALUES (?, ?)";
     const [results] = await connection
       .promise()
-      .query(query, [title, completed || false]);
+      .query(query, [title, status || false]);
 
-    res.status(201).json({ id: results.insertId, title, completed });
+    res.status(201).json({ id: results.insertId, title, status });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -50,19 +50,19 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, completed } = req.body;
-    if (!title && completed === undefined)
+    const { title, status } = req.body;
+    if (!title && status === undefined)
       return res.status(400).json({ error: "No fields to update" });
 
-    const query = "UPDATE todos SET title = ?, completed = ? WHERE id = ?";
+    const query = "UPDATE todos SET title = ?, status = ? WHERE id = ?";
     const [results] = await connection
       .promise()
-      .query(query, [title, completed, id]);
+      .query(query, [title, status, id]);
 
     if (results.affectedRows === 0)
       return res.status(404).json({ error: "Todo not found" });
 
-    res.json({ id, title, completed });
+    res.json({ id, title, status });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
