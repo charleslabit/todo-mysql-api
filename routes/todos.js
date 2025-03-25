@@ -5,10 +5,10 @@ const router = express.Router();
 // ✅ Create a new todo
 router.post("/", async (req, res) => {
   try {
-    const { title, status } = req.body;
+    const { title } = req.body;
     if (!title) return res.status(400).json({ error: "Title is required" });
 
-    const query = "INSERT INTO todos (title, status) VALUES (?, ?)";
+    const query = "INSERT INTO todos (title) VALUES (?)";
     const [results] = await connection
       .promise()
       .query(query, [title, status || false]);
