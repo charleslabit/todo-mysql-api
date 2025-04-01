@@ -1,5 +1,6 @@
 import express from "express";
-import connection from "../db.js"; // Import MySQL connection
+import pool from "../db.js"; // Import MySQL connection pool
+
 const router = express.Router();
 
 // ✅ Create a new todo
@@ -8,8 +9,10 @@ router.post("/", async (req, res) => {
     const { title } = req.body;
     if (!title) return res.status(400).json({ error: "Title is required" });
 
+    const connection = await pool.getConnection();
     const query = "INSERT INTO todos (title) VALUES (?)";
-    const [results] = await connection.promise().query(query, [title]);
+    const [results] = await connection.execute(query, [title]);
+    connection.release(); // Release connection back to the pool
 
     res.status(201).json({ id: results.insertId, title });
   } catch (error) {
@@ -20,7 +23,10 @@ router.post("/", async (req, res) => {
 // ✅ Get all todos
 router.get("/", async (req, res) => {
   try {
-    const [results] = await connection.promise().query("SELECT * FROM todos");
+    const connection = await pool.getConnection();
+    const [results] = await connection.execute("SELECT * FROM todos");
+    connection.release(); // Release connection back to the pool
+
     res.json(results);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -31,9 +37,13 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [results] = await connection
-      .promise()
-      .query("SELECT * FROM todos WHERE id = ?", [id]);
+
+    const connection = await pool.getConnection();
+    const [results] = await connection.execute(
+      "SELECT * FROM todos WHERE id = ?",
+      [id]
+    );
+    connection.release(); // Release connection back to the pool
 
     if (results.length === 0)
       return res.status(404).json({ error: "Todo not found" });
@@ -52,10 +62,10 @@ router.put("/:id", async (req, res) => {
     if (!title && status === undefined)
       return res.status(400).json({ error: "No fields to update" });
 
+    const connection = await pool.getConnection();
     const query = "UPDATE todos SET title = ?, status = ? WHERE id = ?";
-    const [results] = await connection
-      .promise()
-      .query(query, [title, status, id]);
+    const [results] = await connection.execute(query, [title, status, id]);
+    connection.release(); // Release connection back to the pool
 
     if (results.affectedRows === 0)
       return res.status(404).json({ error: "Todo not found" });
@@ -70,9 +80,13 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [results] = await connection
-      .promise()
-      .query("DELETE FROM todos WHERE id = ?", [id]);
+
+    const connection = await pool.getConnection();
+    const [results] = await connection.execute(
+      "DELETE FROM todos WHERE id = ?",
+      [id]
+    );
+    connection.release(); // Release connection back to the pool
 
     if (results.affectedRows === 0)
       return res.status(404).json({ error: "Todo not found" });

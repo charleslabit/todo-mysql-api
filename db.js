@@ -1,23 +1,16 @@
 import dotenv from "dotenv";
-import mysql from "mysql2";
+import mysql from "mysql2/promise"; // Use promise-based MySQL
 dotenv.config();
 
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
   host: process.env.MYSQLHOST, // Railway Host
   user: process.env.MYSQLUSER, // Railway User
   password: process.env.MYSQLPASSWORD, // Railway Password
   database: process.env.MYSQLDATABASE, // Railway Database
-  port: process.env.MYSQLPORT, // Railway Port (usually 3306)
-  connectTimeout: 20000, // 20 seconds timeout
+  port: Number(process.env.MYSQLPORT) || 3306, // Ensure port is a number
   waitForConnections: true,
+  connectionLimit: 10, // Limit connections to prevent overuse
+  queueLimit: 0, // Unlimited queue (adjust if needed)
 });
 
-connection.connect((err) => {
-  if (err) {
-    console.error("❌ Database connection failed:", err);
-    return;
-  }
-  console.log("✅ Connected to Railway MySQL!");
-});
-
-export default connection;
+export default pool;
